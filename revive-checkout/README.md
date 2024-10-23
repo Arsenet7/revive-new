@@ -1,1 +1,0 @@
-# Eric-do-it-yourself-Checkout
