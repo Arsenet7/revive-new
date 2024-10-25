@@ -1,19 +1,28 @@
 pipeline {
-    agent any
+    agent { label 'master' } // Use the master node as the agent
 
     stages {
         stage('Checkout') {
             steps {
                 // Checkout code from GitHub repository
-                git branch: 'UI', url: 'git@github.com:your-username/your-repository.git'
+                git branch: 'UI', url: 'https://github.com/Arsenet7/revive-new.git'
             }
         }
 
         stage('Unit Test') {
+            agent {
+                docker {
+                    image 'maven:latest' // Use Maven Docker image
+                    args '-u root' // Optional: run as root
+                }
+            }
             steps {
                 echo 'Running Unit Tests...'
                 // Add your command to run unit tests
-                sh './run-tests.sh'  // Example: Running a test script
+                sh '''
+                cd ui
+                mvn test  
+                '''  // Example: Running a test script
             }
         }
     }
