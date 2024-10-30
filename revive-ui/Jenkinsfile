@@ -1,8 +1,25 @@
 pipeline {
     agent { label 'master' } // Use the master node as the agent
 
+    parameters {
+        booleanParam(name: 'RUN_SONARQUBE', defaultValue: false, description: 'Run SonarQube analysis?')
+    }
+
+    environment {
+        SONAR_TOKEN = credentials('sonar') // Sonar token
+    }
+
     stages {
-        stage('Checkout and Build') {
+        stage('Checkout') {
+            steps {
+                git branch: 'UI', url: 'https://github.com/Arsenet7/revive-new.git', credentialsId: 'githubs'
+            }
+        }
+
+        stage('Build and Unit Test') { 
+            when {
+                expression { !params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is false
+            }
             agent {
                 docker {
                     image 'maven:3.8.7-openjdk-18'
@@ -10,15 +27,87 @@ pipeline {
                 }
             }
             steps {
-                // Checkout code from GitHub repository using credentials
-                git branch: 'UI', url: 'https://github.com/Arsenet7/revive-new.git', credentialsId: 'githubs'
-
                 echo 'Building project and running Unit Tests...'
                 sh '''
                 cd revive-ui/ui
                 mvn clean compile
                 mvn test
                 '''
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            when {
+                expression { params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is true
+            }
+            environment {
+                SCANNER_HOME = tool 'sonar' // Define the SonarQube scanner tool
+            }
+            steps {
+                script {
+                    // Perform SonarQube analysis using the SonarQube plugin
+                    withSonarQubeEnv('sonar') { // 'sonar' is the SonarQube server configured in Jenkins
+                        sh """
+                            ${SCANNER_HOME}/bin/sonar-scanner \
+                            -Dsonar.projectKey=UI \
+                            -Dsonar.host.url=http://54.82.200.211:9000/ \
+                            -Dsonar.login=$SONAR_TOKEN \
+                            -Dsonar.sources=./revive-ui/ui \
+                            -Dsonar.java.binaries=./revive-ui/ui/src/main/java
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Docker Hub Login') {
+            steps {
+                script {
+                    echo 'Logging into Docker Hub...'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-tgitech', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
+                        sh "echo ${DOCKER_HUB_PASS} | docker login -u ${DOCKER_HUB_USER} --password-stdin"
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo 'Building Docker image...'
+                    sh '''
+                        cd revive-UI/ui
+                        docker build -t tgitech/revive-ui:01 .
+                    '''
+                }
+            }
+        }
+
+        stage('Push Docker Images') {
+            steps {
+                script {
+                    echo 'Pushing Docker images to Docker Hub...'
+                    sh '''
+                        docker push tgitech/revive-ui:01
+                    '''
+                }
+            }
+        }
+
+        stage('Clean Workspace') {
+            steps {
+                script {
+                    echo 'Cleaning up the workspace...'
+                    cleanWs() // Clean the workspace at the end
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                cleanWs() // Clean the workspace at the end
             }
         }
     }
