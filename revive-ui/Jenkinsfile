@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        SONAR_TOKEN = credentials('sonar') // Sonar token
+        SONAR_TOKEN = credentials('scan') // Sonar token
     }
 
     stages {
@@ -41,14 +41,14 @@ pipeline {
                 expression { params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is true
             }
             environment {
-                SCANNER_HOME = tool 'sonar' // Define the SonarQube scanner tool
+                SCANNER_HOME = tool 'scan' // Define the SonarQube scanner tool
             }
             steps {
                 script {
                     // Perform SonarQube analysis using the SonarQube plugin
-                    withSonarQubeEnv('sonar') { // 'sonar' is the SonarQube server configured in Jenkins
+                    withSonarQubeEnv('scan') { // 'sonar' is the SonarQube server configured in Jenkins
                         sh """
-                            ${SCANNER_HOME}/bin/sonar-scanner \
+                            ${SCANNER_HOME}/bin/scan-scanner \
                             -Dsonar.projectKey=UI-micro \
                             -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
                             -Dsonar.login=$SONAR_TOKEN \
