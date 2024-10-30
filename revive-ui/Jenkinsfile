@@ -15,7 +15,7 @@ pipeline {
 
                 echo 'Building project and running Unit Tests...'
                 sh '''
-                cd revive-UI/ui
+                cd revive-ui/ui
                 mvn clean compile
                 mvn test
                 '''
