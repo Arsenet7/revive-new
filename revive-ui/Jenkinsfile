@@ -49,8 +49,8 @@ pipeline {
                     withSonarQubeEnv('sonar') { // 'sonar' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
-                            -Dsonar.projectKey=UI \
-                            -Dsonar.host.url=http://54.82.200.211:9000/ \
+                            -Dsonar.projectKey=UI-micro \
+                            -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
                             -Dsonar.login=$SONAR_TOKEN \
                             -Dsonar.sources=./revive-ui/ui \
                             -Dsonar.java.binaries=./revive-ui/ui/src/main/java
