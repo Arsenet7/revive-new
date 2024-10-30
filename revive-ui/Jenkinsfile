@@ -3,19 +3,16 @@ pipeline {
 
     stages {
         stage('Checkout and Build') {
-            steps {
-                // Checkout code from GitHub repository using credentials
-                git branch: 'UI', url: 'https://github.com/Arsenet7/revive-new.git', credentialsId: 'githubs'
-            }
-
             agent {
                 docker {
                     image 'maven:3.8.7-openjdk-18'
                     args '-u root'
                 }
             }
-
             steps {
+                // Checkout code from GitHub repository using credentials
+                git branch: 'UI', url: 'https://github.com/Arsenet7/revive-new.git', credentialsId: 'githubs'
+
                 echo 'Building project and running Unit Tests...'
                 sh '''
                 cd revive-UI/ui
