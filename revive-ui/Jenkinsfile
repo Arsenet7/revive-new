@@ -8,10 +8,6 @@ pipeline {
                 git branch: 'UI', url: 'https://github.com/Arsenet7/revive-new.git', credentialsId: 'githubs'
             }
 
-            when {
-                expression { !params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is false
-            }
-
             agent {
                 docker {
                     image 'maven:3.8.7-openjdk-18'
