@@ -46,14 +46,14 @@ pipeline {
             steps {
                 script {
                     // Perform SonarQube analysis using the SonarQube plugin
-                    withSonarQubeEnv('scan') { // 'sonar' is the SonarQube server configured in Jenkins
+                    withSonarQubeEnv('scan') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
-                            ${SCANNER_HOME}/bin/scan-scanner \
+                            ${SCANNER_HOME}/bin/sonar-scanner \
                             -Dsonar.projectKey=UI-micro \
                             -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
                             -Dsonar.login=$SONAR_TOKEN \
                             -Dsonar.sources=./revive-ui/ui \
-                            -Dsonar.java.binaries=./revive-ui/ui/src/main/java
+                            -Dsonar.java.binaries=./revive-ui/ui/target/classes
                         """
                     }
                 }
@@ -76,7 +76,7 @@ pipeline {
                 script {
                     echo 'Building Docker image...'
                     sh '''
-                        cd revive-UI/ui
+                        cd revive-ui/ui
                         docker build -t tgitech/revive-ui:01 .
                     '''
                 }
@@ -98,12 +98,11 @@ pipeline {
             steps {
                 script {
                     echo 'Cleaning up the workspace...'
-                    cleanWs() // Clean the workspace at the end
                     sh '''
-                        sudo docker stop $(docker ps -aq) 
-                        sudo docker rm $(docker ps -aq) 
-                        sudo docker rmi $(docker images -q)
-                       '''
+                        docker stop $(docker ps -aq) || true
+                        docker rm $(docker ps -aq) || true
+                        docker rmi $(docker images -q) || true
+                    '''
                 }
             }
         }
