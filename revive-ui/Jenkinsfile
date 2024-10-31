@@ -56,7 +56,7 @@ pipeline {
                             -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
                             -Dsonar.login=${SONAR_TOKEN} \
                             -Dsonar.sources=./revive-ui/ui \
-                            -Dsonar.java.binaries=./revive-ui/ui/target/classes
+                            -Dsonar.java.binaries=./revive-ui/ui/src/main/java
                         """
                     }
                 }
