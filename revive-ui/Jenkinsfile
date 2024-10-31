@@ -18,7 +18,7 @@ pipeline {
 
         stage('Build and Unit Test') { 
             when {
-                expression { !params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is false
+                expression { params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is false
             }
             agent {
                 docker {
@@ -41,7 +41,7 @@ pipeline {
                 expression { params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is true
             }
             environment {
-                SCANNER_HOME = tool 'sonar' // Define the SonarQube scanner tool
+                SCANNER_HOME = tool 'scan' // Define the SonarQube scanner tool
             }
             steps {
                 script {
