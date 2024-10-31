@@ -114,9 +114,11 @@ pipeline {
 
     post {
         always {
-            script {
-                echo 'Final cleanup...'
-                cleanWs() // Clean the workspace at the end
+            node { // Ensure cleanWs is executed within a node context
+                script {
+                    echo 'Final cleanup...'
+                    cleanWs() // Clean the workspace at the end
+                }
             }
         }
     }
