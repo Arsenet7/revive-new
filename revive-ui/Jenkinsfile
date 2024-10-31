@@ -45,13 +45,16 @@ pipeline {
             }
             steps {
                 script {
-                    // Perform SonarQube analysis using the SonarQube plugin
+                    echo "Starting SonarQube analysis..."
+                    echo "SonarQube URL: https://sonarqube.devopseasylearning.uk/"
+                    echo "SonarQube Project Key: UI-micro"
+
                     withSonarQubeEnv('scan') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
                             -Dsonar.projectKey=UI-micro \
                             -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
-                            -Dsonar.login=$SONAR_TOKEN \
+                            -Dsonar.login=${SONAR_TOKEN} \
                             -Dsonar.sources=./revive-ui/ui \
                             -Dsonar.java.binaries=./revive-ui/ui/target/classes
                         """
@@ -98,14 +101,23 @@ pipeline {
             steps {
                 script {
                     echo 'Cleaning up the workspace...'
+                    cleanWs() // Clean the workspace at the end
                     sh '''
-                        docker stop $(docker ps -aq) || true
-                        docker rm $(docker ps -aq) || true
-                        docker rmi $(docker images -q) || true
+                        sudo docker stop $(docker ps -aq) 
+                        sudo docker rm $(docker ps -aq) 
+                        sudo docker rmi $(docker images -q)
                     '''
                 }
             }
         }
     }
 
+    post {
+        always {
+            script {
+                echo 'Final cleanup...'
+                cleanWs() // Clean the workspace at the end
+            }
+        }
+    }
 }
