@@ -108,11 +108,4 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            script {
-                cleanWs() // Clean the workspace at the end
-            }
-        }
-    }
 }
