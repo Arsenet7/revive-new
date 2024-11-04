@@ -80,7 +80,7 @@ pipeline {
                     echo 'Building Docker image...'
                     sh '''
                         cd revive-ui/ui
-                        docker build -t tgitech/revive-ui:01 .
+                        docker build -t arsenet10/revive-ui:01 .
                     '''
                 }
             }
@@ -91,7 +91,7 @@ pipeline {
                 script {
                     echo 'Pushing Docker images to Docker Hub...'
                     sh '''
-                        docker push tgitech/revive-ui:01
+                        docker push arsenet10/revive-ui:01
                     '''
                 }
             }
