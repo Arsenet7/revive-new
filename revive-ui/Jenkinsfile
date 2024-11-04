@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'master' } // Use the master node as the agent
+    agent { label 'any' } // Use the master node as the agent
 
     parameters {
         booleanParam(name: 'RUN_SONARQUBE', defaultValue: false, description: 'Run SonarQube analysis?')
