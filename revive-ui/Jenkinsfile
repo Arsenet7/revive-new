@@ -12,11 +12,14 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                script {
+                    echo "Checking out code from GitHub..."
+                }
                 git branch: 'UI', url: 'https://github.com/Arsenet7/revive-new.git', credentialsId: 'githubs'
             }
         }
 
-        stage('Build and Unit Test') { 
+        stage('Build and Unit Test') {
             when {
                 expression { !params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is false
             }
@@ -121,11 +124,9 @@ pipeline {
 
     post {
         always {
-            node('master') { // Specify the label for the node
-                script {
-                    echo 'Final cleanup...'
-                    cleanWs() // Clean the workspace at the end
-                }
+            script {
+                echo 'Final cleanup...'
+                cleanWs() // Clean the workspace at the end
             }
         }
     }
