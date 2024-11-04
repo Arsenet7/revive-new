@@ -103,9 +103,9 @@ pipeline {
                     echo 'Cleaning up the workspace...'
                     cleanWs() // Clean the workspace at the end
                     sh '''
-                        sudo docker stop $(docker ps -aq) 
-                        sudo docker rm $(docker ps -aq) 
-                        sudo docker rmi $(docker images -q)
+                         docker stop $(docker ps -aq) 
+                         docker rm $(docker ps -aq) 
+                         docker rmi $(docker images -q)
                     '''
                 }
             }
