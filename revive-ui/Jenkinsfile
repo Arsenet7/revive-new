@@ -98,19 +98,26 @@ pipeline {
         }
 
         stage('Clean Workspace') {
-            steps {
-                script {
-                    echo 'Cleaning up the workspace...'
-                    cleanWs() // Clean the workspace at the end
-                    sh '''
-                         docker stop $(docker ps -aq) 
-                         docker rm $(docker ps -aq) 
-                         docker rmi $(docker images -q)
-                    '''
-                }
-            }
+    steps {
+        script {
+            echo 'Cleaning up the workspace...'
+            cleanWs() // Clean the workspace at the end
+            sh '''
+                # Stop and remove containers if any exist
+                if [ "$(docker ps -aq)" ]; then
+                    docker stop $(docker ps -aq)
+                    docker rm $(docker ps -aq)
+                fi
+
+                # Remove images if any exist
+                if [ "$(docker images -q)" ]; then
+                    docker rmi $(docker images -q)
+                fi
+            '''
         }
     }
+}
+
 
     post {
         always {
