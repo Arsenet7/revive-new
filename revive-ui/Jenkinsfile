@@ -18,7 +18,7 @@ pipeline {
 
         stage('Build and Unit Test') { 
             when {
-                expression { params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is false
+                expression { !params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is false
             }
             agent {
                 docker {
@@ -49,7 +49,7 @@ pipeline {
                     echo "SonarQube URL: https://sonarqube.devopseasylearning.uk/"
                     echo "SonarQube Project Key: UI-micro"
 
-                    withSonarQubeEnv('sonar') { // 'scan' is the SonarQube server configured in Jenkins
+                    withSonarQubeEnv('scan') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
                             -Dsonar.projectKey=UI-micro \
@@ -86,10 +86,10 @@ pipeline {
             }
         }
 
-        stage('Push Docker Images') {
+        stage('Push Docker Image') {
             steps {
                 script {
-                    echo 'Pushing Docker images to Docker Hub...'
+                    echo 'Pushing Docker image to Docker Hub...'
                     sh '''
                         docker push arsenet10/revive-ui:01
                     '''
@@ -98,26 +98,26 @@ pipeline {
         }
 
         stage('Clean Workspace') {
-    steps {
-        script {
-            echo 'Cleaning up the workspace...'
-            cleanWs() // Clean the workspace at the end
-            sh '''
-                # Stop and remove containers if any exist
-                if [ "$(docker ps -aq)" ]; then
-                    docker stop $(docker ps -aq)
-                    docker rm $(docker ps -aq)
-                fi
+            steps {
+                script {
+                    echo 'Cleaning up the workspace...'
+                    cleanWs() // Clean the workspace at the end
+                    sh '''
+                        # Stop and remove containers if any exist
+                        if [ "$(docker ps -aq)" ]; then
+                            docker stop $(docker ps -aq)
+                            docker rm $(docker ps -aq)
+                        fi
 
-                # Remove images if any exist
-                if [ "$(docker images -q)" ]; then
-                    docker rmi $(docker images -q)
-                fi
-            '''
+                        # Remove images if any exist
+                        if [ "$(docker images -q)" ]; then
+                            docker rmi $(docker images -q)
+                        fi
+                    '''
+                }
+            }
         }
     }
-}
-
 
     post {
         always {
