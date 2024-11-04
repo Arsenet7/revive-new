@@ -46,7 +46,7 @@ pipeline {
                     echo "SonarQube URL: https://sonarqube.devopseasylearning.uk/"
                     echo "SonarQube Project Key: UI-micro"
 
-                    withSonarQubeEnv('scan') { // 'scan' is the SonarQube server configured in Jenkins
+                    withSonarQubeEnv('sonar') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
                             -Dsonar.projectKey=UI-micro \
