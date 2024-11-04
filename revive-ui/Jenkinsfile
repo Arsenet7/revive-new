@@ -20,9 +20,6 @@ pipeline {
         }
 
         stage('Build and Unit Test') {
-            when {
-                expression { !params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is false
-            }
             agent {
                 docker {
                     image 'maven:3.8.7-openjdk-18'
@@ -40,9 +37,6 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            when {
-                expression { params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is true
-            }
             environment {
                 SCANNER_HOME = tool 'scan' // Define the SonarQube scanner tool
             }
@@ -52,7 +46,7 @@ pipeline {
                     echo "SonarQube URL: https://sonarqube.devopseasylearning.uk/"
                     echo "SonarQube Project Key: UI-micro"
 
-                    withSonarQubeEnv('sonar') { // 'scan' is the SonarQube server configured in Jenkins
+                    withSonarQubeEnv('scan') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
                             -Dsonar.projectKey=UI-micro \
