@@ -1,132 +1,127 @@
 pipeline {
-    agent any
+    agent any // Use the master node as the agent
+
+    parameters {
+        booleanParam(name: 'RUN_SONARQUBE', defaultValue: false, description: 'Run SonarQube analysis?')
+    }
+
     environment {
-		DOCKERHUB_CREDENTIALS=credentials('del-docker-hub-auth')
-	}
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '20'))
-        disableConcurrentBuilds()
-        timeout (time: 60, unit: 'MINUTES')
-        timestamps()
-      }
+        SONAR_TOKEN = credentials('sonarid') // Sonar token
+    }
+
     stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    echo "Checking out code from GitHub..."
+                }
+                git branch: 'ASSETS', url: 'https://github.com/Arsenet7/revive-new.git', credentialsId: 'githubs'
+            }
+        }
 
-
-         stage('SonarQube analysis') {
+        stage('Build and Unit Test') {
             agent {
                 docker {
-                  image 'sonarsource/sonar-scanner-cli:5.0.1'
-                }
-               }
-               environment {
-        CI = 'true'
-        scannerHome='/opt/sonar-scanner'
-    }
-            steps{
-                withSonarQubeEnv('Sonar') {
-                    sh "${scannerHome}/bin/sonar-scanner"
+                    image 'maven:3.8.7-openjdk-18'
+                    args '-u root'
                 }
             }
-        }
-
-
-    stage('Login') {
-
-			steps {
-				sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-			}
-		}
-        stage('build-image') {
             steps {
-
+                echo 'Building project and running Unit Tests...'
                 sh '''
-                TAG=$(git rev-parse --short=6 HEAD)
-                cd ${WORKSPACE}/assets
-                docker build -t devopseasylearning/eric_do_it_yourself_assets:${TAG} .
+                cd revive-ui/ui
+                mvn clean compile
+                mvn test
                 '''
-
             }
         }
 
+        stage('SonarQube Analysis') {
+            environment {
+                SCANNER_HOME = tool 'scan' // Define the SonarQube scanner tool
+            }
+            steps {
+                script {
+                    echo "Starting SonarQube analysis..."
+                    echo "SonarQube URL: https://sonarqube.devopseasylearning.uk/"
+                    echo "SonarQube Project Key: UI-micro"
 
-
-        stage('Push-image') {
-           when{ 
-         expression {
-           env.GIT_BRANCH == 'origin/main' }
-           }
-           steps {
-               sh '''
-               TAG=$(git rev-parse --short=6 HEAD)
-           docker push devopseasylearning/eric_do_it_yourself_assets:${TAG}
-           
-               '''
-           }
+                    withSonarQubeEnv('sonar') { // 'scan' is the SonarQube server configured in Jenkins
+                        sh """
+                            ${SCANNER_HOME}/bin/sonar-scanner \
+                            -Dsonar.projectKey=UI-micro \
+                            -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
+                            -Dsonar.login=${SONAR_TOKEN} \
+                            -Dsonar.sources=./revive-ui/ui \
+                            -Dsonar.java.binaries=./revive-ui/ui/src/main/java
+                        """
+                    }
+                }
+            }
         }
 
+        stage('Docker Hub Login') {
+            steps {
+                script {
+                    echo 'Logging into Docker Hub...'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-ars-id', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
+                        sh "echo ${DOCKER_HUB_PASS} | docker login -u ${DOCKER_HUB_USER} --password-stdin"
+                    }
+                }
+            }
+        }
 
-stage('trigger-deployment') {
-    agent { 
-        label 'deploy' 
-    }
-    when { 
-        expression { 
-            env.GIT_BRANCH == 'origin/main' 
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo 'Building Docker image...'
+                    sh '''
+                        cd revive-ui/ui
+                        docker build -t arsenet10/revive-ui:01 .
+                    '''
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    echo 'Pushing Docker image to Docker Hub...'
+                    sh '''
+                        docker push arsenet10/revive-ui:01
+                    '''
+                }
+            }
+        }
+
+        stage('Clean Workspace') {
+            steps {
+                script {
+                    echo 'Cleaning up the workspace...'
+                    cleanWs() // Clean the workspace at the end
+                    sh '''
+                        # Stop and remove containers if any exist
+                        if [ "$(docker ps -aq)" ]; then
+                            docker stop $(docker ps -aq)
+                            docker rm $(docker ps -aq)
+                        fi
+
+                        # Remove images if any exist
+                        if [ "$(docker images -q)" ]; then
+                            docker rmi $(docker images -q)
+                        fi
+                    '''
+                }
+            }
         }
     }
-    steps {
-        sh '''
-            TAG=$(git rev-parse --short=6 HEAD)
-            rm -rf Eric-do-it-yourself-devops-automation || true
-            git clone git@github.com:DEL-ORG/Eric-do-it-yourself-devops-automation.git 
-            cd Eric-do-it-yourself-devops-automation/chart
-            yq eval '.assets.tag = "'"$TAG"'"' -i dev-values.yaml
-            
-            git config --global user.name "devopseasylearning"
-            git config --global user.email info@devopseasylearning.com
-            
-            git add -A
-            if git diff-index --quiet HEAD; then
-                echo "No changes to commit"
-            else
-                git commit -m "updating assets to ${TAG}"
-                git push origin main
-            fi
-        '''
+
+    post {
+        always {
+            script {
+                echo 'Final cleanup...'
+                cleanWs() // Clean the workspace at the end
+            }
+        }
     }
 }
-
-
-
-
-
-    }
-
-
-
-   post {
-   
-   success {
-      slackSend (channel: '#development-alerts', color: 'good', message: "SUCCESSFUL: Application Eric-do-it-yourself-assets  Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-    }
-
- 
-    unstable {
-      slackSend (channel: '#development-alerts', color: 'warning', message: "UNSTABLE: Application Eric-do-it-yourself-assets  Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-    }
-
-    failure {
-      slackSend (channel: '#development-alerts', color: '#FF0000', message: "FAILURE: Application Eric-do-it-yourself-assets Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-    }
-   
-    cleanup {
-      deleteDir()
-    }
-}
-
-
-
-
-
-}
-
