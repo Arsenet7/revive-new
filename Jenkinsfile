@@ -15,7 +15,7 @@ pipeline {
                 script {
                     echo "Checking out code from GitHub..."
                 }
-                git branch: 'ORDERS', url: 'https://github.com/Arsenet7/revive-new.git', credentialsId: 'githubs'
+                git branch: 'CATALOG', url: 'https://github.com/Arsenet7/revive-new.git', credentialsId: 'githubs'
             }
         }
 
