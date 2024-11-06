@@ -75,8 +75,8 @@ pipeline {
                 script {
                     echo 'Building Docker image...'
                     sh '''
-                        cd revive-ui/ui
-                        docker build -t arsenet10/revive-orders:01 .
+                        cd revive-cart/cart
+                        docker build -t arsenet10/revive-cart:01 .
                     '''
                 }
             }
@@ -87,7 +87,7 @@ pipeline {
                 script {
                     echo 'Pushing Docker image to Docker Hub...'
                     sh '''
-                        docker push arsenet10/revive-orders:01
+                        docker push arsenet10/revive-cart:01
                     '''
                 }
             }
