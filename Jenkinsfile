@@ -43,16 +43,16 @@ pipeline {
                 script {
                     echo "Starting SonarQube analysis..."
                     echo "SonarQube URL: https://sonarqube.devopseasylearning.uk/"
-                    echo "SonarQube Project Key: ORDERS-micro-ARSENE"
+                    echo "SonarQube Project Key: CART-micro"
 
                     withSonarQubeEnv('sonar') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
-                            -Dsonar.projectKey=UI-micro \
+                            -Dsonar.projectKey=CART-micro \
                             -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
                             -Dsonar.login=${SONAR_TOKEN} \
-                            -Dsonar.sources=./revive-orders/orders \
-                            -Dsonar.java.binaries=./revive-ui/ui/src/main/java
+                            -Dsonar.sources=./revive-cart/cart \
+                            -Dsonar.java.binaries=./revive-cart/cart/src/main/java
                         """
                     }
                 }
