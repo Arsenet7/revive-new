@@ -76,7 +76,7 @@ pipeline {
                 script {
                     echo 'Building Docker image...'
                     sh '''
-                        cd revive-ui/ui
+                        cd revive-orders/orders
                         docker build -t arsenet10/revive-orders:01 .
                     '''
                 }
