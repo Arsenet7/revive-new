@@ -48,7 +48,7 @@ pipeline {
                     withSonarQubeEnv('sonar') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
-                            -Dsonar.projectKey=CART-micro \
+                            -Dsonar.projectKey=CART-micro-Arsene \
                             -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
                             -Dsonar.login=${SONAR_TOKEN} \
                             -Dsonar.sources=./revive-cart/cart \
