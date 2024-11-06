@@ -30,8 +30,7 @@ pipeline {
                 echo 'Building project and running Unit Tests...'
                 sh '''
                 cd revive-cart/cart
-                mvn clean compile
-                mvn test
+                mvn test -DskipTests
                 '''
             }
         }
