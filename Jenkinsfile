@@ -89,7 +89,7 @@ pipeline {
                     echo 'Pushing Docker image to Docker Hub...'
                     sh '''
                         docker push arsenet10/revive-catalog:01
-                        docker push arsent10/revive-catalog:db-01
+                        docker push arsenet10/revive-catalog:db-01
                     '''
                 }
             }
