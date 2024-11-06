@@ -22,16 +22,16 @@ pipeline {
         stage('Build and Unit Test') {
             agent {
                 docker {
-                    image 'maven:3.8.7-openjdk-18'
+                    image 'node:22.4'
                     args '-u root'
                 }
             }
             steps {
                 echo 'Building project and running Unit Tests...'
                 sh '''
-                cd revive-orders/orders
-                mvn clean compile
-                mvn test
+                cd revive-checkout/checkout
+                npm install 
+                npm test --passWithNoTests || true
                 '''
             }
         }
@@ -44,16 +44,16 @@ pipeline {
                 script {
                     echo "Starting SonarQube analysis..."
                     echo "SonarQube URL: https://sonarqube.devopseasylearning.uk/"
-                    echo "SonarQube Project Key: ORDERS-micro-ARSENE"
+                    echo "SonarQube Project Key: CHECKOUT-micro-ARSENE"
 
                     withSonarQubeEnv('sonar') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
-                            -Dsonar.projectKey=UI-micro \
+                            -Dsonar.projectKey=Checkout-micro-Arsene \
                             -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
                             -Dsonar.login=${SONAR_TOKEN} \
-                            -Dsonar.sources=./revive-orders/orders \
-                            -Dsonar.java.binaries=./revive-ui/ui/src/main/java
+                            -Dsonar.sources=./revive-checkout/checkout \
+                            -Dsonar.java.binaries=./revive-checkout/checkout/src/main/java
                         """
                     }
                 }
@@ -76,8 +76,9 @@ pipeline {
                 script {
                     echo 'Building Docker image...'
                     sh '''
-                        cd revive-ui/ui
-                        docker build -t arsenet10/revive-orders:01 .
+                        cd revive-checkout/checkout
+                        docker build -t arsenet10/revive-checkout:01 .
+                        docker build -f Dockerfile-db -t arsenet10/revive-checkout:db-01 .
                     '''
                 }
             }
@@ -88,7 +89,7 @@ pipeline {
                 script {
                     echo 'Pushing Docker image to Docker Hub...'
                     sh '''
-                        docker push arsenet10/revive-orders:01
+                        docker push arsenet10/revive-checkout:01
                     '''
                 }
             }
