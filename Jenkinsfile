@@ -19,23 +19,6 @@ pipeline {
             }
         }
 
-        stage('Build and Unit Test') {
-            agent {
-                docker {
-                    image 'maven:3.8.7-openjdk-18'
-                    args '-u root'
-                }
-            }
-            steps {
-                echo 'Building project and running Unit Tests...'
-                sh '''
-                cd revive-ui/ui
-                mvn clean compile
-                mvn test
-                '''
-            }
-        }
-
         stage('SonarQube Analysis') {
             environment {
                 SCANNER_HOME = tool 'scan' // Define the SonarQube scanner tool
@@ -44,16 +27,16 @@ pipeline {
                 script {
                     echo "Starting SonarQube analysis..."
                     echo "SonarQube URL: https://sonarqube.devopseasylearning.uk/"
-                    echo "SonarQube Project Key: UI-micro"
+                    echo "SonarQube Project Key: ASSETS-micro-Arsene"
 
                     withSonarQubeEnv('sonar') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
-                            -Dsonar.projectKey=UI-micro \
+                            -Dsonar.projectKey=Assets-micro-Arsene \
                             -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
                             -Dsonar.login=${SONAR_TOKEN} \
-                            -Dsonar.sources=./revive-ui/ui \
-                            -Dsonar.java.binaries=./revive-ui/ui/src/main/java
+                            -Dsonar.sources=./revive-assets/assets \
+                            -Dsonar.java.binaries=./revive-assets/assets/src/main/java
                         """
                     }
                 }
@@ -76,8 +59,8 @@ pipeline {
                 script {
                     echo 'Building Docker image...'
                     sh '''
-                        cd revive-ui/ui
-                        docker build -t arsenet10/revive-ui:01 .
+                        cd revive-assets/assets
+                        docker build -t arsenet10/revive-assets:01 .
                     '''
                 }
             }
@@ -88,7 +71,7 @@ pipeline {
                 script {
                     echo 'Pushing Docker image to Docker Hub...'
                     sh '''
-                        docker push arsenet10/revive-ui:01
+                        docker push arsenet10/revive-assets:01
                     '''
                 }
             }
