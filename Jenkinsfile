@@ -22,16 +22,15 @@ pipeline {
         stage('Build and Unit Test') {
             agent {
                 docker {
-                    image 'maven:3.8.7-openjdk-18'
+                     image 'golang:1.22.5'
                     args '-u root'
                 }
             }
             steps {
                 echo 'Building project and running Unit Tests...'
                 sh '''
-                cd revive-orders/orders
-                mvn clean compile
-                mvn test
+                cd revive-catalog/catalog
+                 go test
                 '''
             }
         }
@@ -44,16 +43,16 @@ pipeline {
                 script {
                     echo "Starting SonarQube analysis..."
                     echo "SonarQube URL: https://sonarqube.devopseasylearning.uk/"
-                    echo "SonarQube Project Key: ORDERS-micro-ARSENE"
+                    echo "SonarQube Project Key: Catalog-micro-ARSENE"
 
                     withSonarQubeEnv('sonar') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
-                            -Dsonar.projectKey=UI-micro \
+                            -Dsonar.projectKey=CATALOG-micro-Arsene \
                             -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
                             -Dsonar.login=${SONAR_TOKEN} \
-                            -Dsonar.sources=./revive-orders/orders \
-                            -Dsonar.java.binaries=./revive-ui/ui/src/main/java
+                            -Dsonar.sources=./revive-catalog/catalog \
+                            -Dsonar.java.binaries=./revive-catalog/catalog/src/main/java
                         """
                     }
                 }
@@ -76,8 +75,9 @@ pipeline {
                 script {
                     echo 'Building Docker image...'
                     sh '''
-                        cd revive-ui/ui
-                        docker build -t arsenet10/revive-orders:01 .
+                        cd revive-catalog/catalog
+                        docker build -t arsenet10/revive-catalog:01 .
+                        docker build -f Dockerfile-db -t arsenet10/revive-catalog:db-01 .
                     '''
                 }
             }
@@ -88,7 +88,8 @@ pipeline {
                 script {
                     echo 'Pushing Docker image to Docker Hub...'
                     sh '''
-                        docker push arsenet10/revive-orders:01
+                        docker push arsenet10/revive-catalog:01
+                        docker push tgitech/revive-catalog:db-01
                     '''
                 }
             }
