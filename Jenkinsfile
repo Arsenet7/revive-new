@@ -49,11 +49,11 @@ pipeline {
                     withSonarQubeEnv('sonar') { // 'scan' is the SonarQube server configured in Jenkins
                         sh """
                             ${SCANNER_HOME}/bin/sonar-scanner \
-                            -Dsonar.projectKey=UI-micro \
+                            -Dsonar.projectKey=ORDERS-micro-Arsene \
                             -Dsonar.host.url=https://sonarqube.devopseasylearning.uk/ \
                             -Dsonar.login=${SONAR_TOKEN} \
                             -Dsonar.sources=./revive-orders/orders \
-                            -Dsonar.java.binaries=./revive-ui/ui/src/main/java
+                            -Dsonar.java.binaries=./revive-orders/orders/src/main/java
                         """
                     }
                 }
