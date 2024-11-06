@@ -29,7 +29,7 @@ pipeline {
             steps {
                 echo 'Building project and running Unit Tests...'
                 sh '''
-                cd revive-orders/orders
+                cd revive-cart/cart
                 mvn clean compile
                 mvn test
                 '''
