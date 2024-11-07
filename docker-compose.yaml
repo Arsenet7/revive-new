@@ -29,8 +29,7 @@ services:
     container_name: assets
     restart: always
   catalog:
-    image: arsenet10/revive-assets:01
-    image: tgitech/revive-catalog:01
+    image: arsenet10/revive-catalog:01
     container_name: catalog
     restart: always
     depends_on:
