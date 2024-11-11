@@ -78,6 +78,8 @@ pipeline {
                     sh '''
                         cd revive-orders/orders
                         docker build -t arsenet10/revive-orders:01 .
+                        docker build -f Dockerfile-db -t arsenet10/revive-orders:db-01 .
+                        docker build -f Dockerfile-rabbit-mq -t arsenet10/revive-orders:rabbit-mq-01 .
                     '''
                 }
             }
@@ -89,6 +91,8 @@ pipeline {
                     echo 'Pushing Docker image to Docker Hub...'
                     sh '''
                         docker push arsenet10/revive-orders:01
+                        docker push arsenet10/revive-orders:db-01
+                        docker push arsenet10/revive-orders:rabbit-mq-01
                     '''
                 }
             }
