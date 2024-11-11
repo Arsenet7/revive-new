@@ -20,6 +20,9 @@ pipeline {
         }
 
         stage('Build and Unit Test') {
+            when {
+                expression { params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is false
+            }
             agent {
                 docker {
                      image 'golang:1.22.5'
@@ -36,6 +39,9 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
+            when {
+                expression { params.RUN_SONARQUBE } // Execute only if RUN_SONARQUBE is false
+            }
             environment {
                 SCANNER_HOME = tool 'scan' // Define the SonarQube scanner tool
             }
