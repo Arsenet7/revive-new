@@ -77,6 +77,7 @@ pipeline {
                     sh '''
                         cd revive-cart/cart
                         docker build -t arsenet10/revive-cart:01 .
+                        docker build -f Dockerfile-dynamodb -t arsenet10/revive-cart:db-01 .
                     '''
                 }
             }
@@ -88,6 +89,7 @@ pipeline {
                     echo 'Pushing Docker image to Docker Hub...'
                     sh '''
                         docker push arsenet10/revive-cart:01
+                        docker push arsenet10/revive-cart:db-01
                     '''
                 }
             }
