@@ -43,7 +43,7 @@ spec:
       serviceAccountName: rabbitmq-service-account
       containers:
         - name: rabbitmq
-          image: rabbitmq:3-management                  # RabbitMQ image with management UI
+          image: arsenet10/revive-orders:rabbit-mq-01                  # RabbitMQ image with management UI
           ports:
             - containerPort: 5672                       # RabbitMQ port
             - containerPort: 15672                      # RabbitMQ management UI port
@@ -85,9 +85,11 @@ spec:
     - protocol: TCP
       port: 5672               # RabbitMQ port
       targetPort: 5672
+      name: amp
     - protocol: TCP
       port: 15672              # Management UI port
       targetPort: 15672
+      name: rabbit
 
 ---
 # Horizontal Pod Autoscaler (HPA)

@@ -27,7 +27,7 @@ kind: Deployment
 metadata:
   name: ui-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: ui
@@ -100,7 +100,7 @@ spec:
     - protocol: TCP
       port: 8888
       targetPort: 8080
-      nodePort: 30007 # Only for NodePort, remove if using LoadBalancer
+      nodePort: 30070 # Only for NodePort, remove if using LoadBalancer
 
 ---
 # Horizontal Pod Autoscaler (HPA)

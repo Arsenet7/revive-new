@@ -17,8 +17,8 @@ data:
   SPRING_DATASOURCE_WRITER_URL: jdbc:postgresql://orders-db:3306/orders
   SPRING_DATASOURCE_READER_URL: jdbc:postgresql://orders-db:5432/orders
   SPRING_RABBITMQ_HOST: "rabbitmq"
-  region: "us-east-1"
-  dynamo_create_table: "true"
+  REGION: "us-east-1"
+  DYNAMODB_CREATE_TABLE: "true"
 
 ---
 # Secret
@@ -28,8 +28,8 @@ metadata:
   name: cart-db-secret
 type: Opaque
 data:
-  AWS_SECRET_ACCESS_KEY:
-  AWS_ACCESS_KEY_ID:
+  AWS_SECRET_ACCESS_KEY: "WnlmczZhWW5JellGT3RFc3Q1TFZhb2hvdlhuZWo2RVd1eFVoK0daOQ=="
+  AWS_ACCESS_KEY_ID: "QUtJQVRQQzRRVUVXT0c0VklWQzQ="
   SPRING_DATASOURCE_WRITER_USERNAME: "b3JkZXJzX3VzZXI="
   SPRING_DATASOURCE_WRITER_PASSWORD: "b3JkZXJzX3Bhc3M="
   SPRING_DATASOURCE_READER_USERNAME: "b3JkZXJzX3VzZXI="
@@ -55,14 +55,9 @@ spec:
       serviceAccountName: cart-db-service-account
       containers:
         - name: cart-db-container
-          image: arsenet10/revive-cartdynamodb:01     # DynamoDB local image for testing
+          image: arsenet10/revive-cart:db-01     # DynamoDB local image for testing
           ports:
             - containerPort: 8000                # Example port, adjust as needed
-          envFrom:
-            - configMapRef:
-                name: cart-db-config
-            - secretRef:
-                name: cart-db-secret
           volumeMounts:
             - name: cart-db-storage
               mountPath: /home/dynamodb      # Mount path for DynamoDB storage

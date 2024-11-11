@@ -32,7 +32,7 @@ kind: Deployment
 metadata:
   name: catalog-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: catalog
@@ -93,7 +93,7 @@ spec:
     app: catalog
   ports:
     - protocol: TCP
-      port: 8000
+      port: 8080
       targetPort: 8080
 
 ---

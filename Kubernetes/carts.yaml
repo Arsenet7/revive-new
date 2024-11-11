@@ -12,8 +12,8 @@ metadata:
   name: cart-config
 data:
   JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/urandom"
-  SERVER_TOMCAT_ACCESSLOG_ENABLED: "true"
-  SPRING_PROFILES_ACTIVE: "dynamodb"
+  #SERVER_TOMCAT_ACCESSLOG_ENABLED: "true"
+  #SPRING_PROFILES_ACTIVE: "dynamodb"
   CARTS_DYNAMODB_ENDPOINT: "http://carts-db:8000"
   CARTS_DYNAMODB_CREATETABLE: "true"
 
@@ -25,8 +25,8 @@ metadata:
   name: cart-secret
 type: Opaque
 data:
-  AWS_ACCESS_KEY_ID: "key"
-  AWS_SECRET_ACCESS_KEY: "dummy"
+  AWS_SECRET_ACCESS_KEY: "WnlmczZhWW5JellGT3RFc3Q1TFZhb2hvdlhuZWo2RVd1eFVoK0daOQ=="
+  AWS_ACCESS_KEY_ID: "QUtJQVRQQzRRVUVXT0c0VklWQzQ="
 
 ---
 # Deployment
@@ -53,8 +53,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: cart-config      # Refer to ConfigMap
-            - secretRef:
-                name: cart-secret
           resources:
             limits:
               cpu: "500m"
@@ -75,8 +73,8 @@ spec:
     app: cart
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 80
+      port: 8080
+      targetPort: 8080
 
 ---
 # Horizontal Pod Autoscaler (HPA)
