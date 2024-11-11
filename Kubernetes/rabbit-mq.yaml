@@ -1,0 +1,111 @@
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rabbitmq-service-account
+
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+data:
+  RABBITMQ_DEFAULT_USER: "rabbit_user"         # RabbitMQ default user
+  RABBITMQ_DEFAULT_VHOST: "/"                  # RabbitMQ default virtual host
+
+---
+# Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-secret
+type: Opaque
+data:
+  RABBITMQ_DEFAULT_PASS: "cmFiaXRfcGFzc3dvcmQ="  # Base64-encoded password (e.g., "rabbit_password")
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      serviceAccountName: rabbitmq-service-account
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management                  # RabbitMQ image with management UI
+          ports:
+            - containerPort: 5672                       # RabbitMQ port
+            - containerPort: 15672                      # RabbitMQ management UI port
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: rabbitmq-config
+                  key: RABBITMQ_DEFAULT_USER
+            - name: RABBITMQ_DEFAULT_VHOST
+              valueFrom:
+                configMapKeyRef:
+                  name: rabbitmq-config
+                  key: RABBITMQ_DEFAULT_VHOST
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_PASS
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+
+---
+# Service (ClusterIP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+spec:
+  type: ClusterIP
+  selector:
+    app: rabbitmq
+  ports:
+    - protocol: TCP
+      port: 5672               # RabbitMQ port
+      targetPort: 5672
+    - protocol: TCP
+      port: 15672              # Management UI port
+      targetPort: 15672
+
+---
+# Horizontal Pod Autoscaler (HPA)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rabbitmq-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rabbitmq
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

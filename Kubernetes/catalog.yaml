@@ -1,0 +1,118 @@
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: catalog-service-account
+
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: catalog-config
+data:
+  GIN_MODE: release
+  DB_HOST: catalog-db
+  DB_NAME: sampledb
+---
+# Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: catalog-secret
+type: Opaque
+data:
+  DB_USER: "Y2F0YWxvZ191c2Vy" 
+  DB_PASSWORD: "Y2F0YWxvZ19wYXNz"   # Base64-encoded secret value (e.g., "secret-value")
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: catalog
+  template:
+    metadata:
+      labels:
+        app: catalog
+    spec:
+      serviceAccountName: catalog-service-account
+      containers:
+        - name: catalog-container
+          image: arsenet10/revive-catalog:01 # Replace with your actual image
+          ports:
+            - containerPort: 8080
+          env:
+            - name: GIN_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: catalog-config
+                  key: GIN_MODE
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: catalog-config
+                  key: DB_HOST
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: catalog-config
+                  key: DB_NAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: catalog-secret
+                  key: DB_PASSWORD
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: catalog-secret
+                  key: DB_USER
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+
+---
+# Service (ClusterIP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog 
+spec:
+  type: ClusterIP
+  selector:
+    app: catalog
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8080
+
+---
+# Horizontal Pod Autoscaler (HPA)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: catalog-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: catalog-deployment
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

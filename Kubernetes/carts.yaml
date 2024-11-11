@@ -1,0 +1,100 @@
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cart-service-account
+
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cart-config
+data:
+  JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/urandom"
+  SERVER_TOMCAT_ACCESSLOG_ENABLED: "true"
+  SPRING_PROFILES_ACTIVE: "dynamodb"
+  CARTS_DYNAMODB_ENDPOINT: "http://carts-db:8000"
+  CARTS_DYNAMODB_CREATETABLE: "true"
+
+---
+# Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cart-secret
+type: Opaque
+data:
+  AWS_ACCESS_KEY_ID: "key"
+  AWS_SECRET_ACCESS_KEY: "dummy"
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart
+  template:
+    metadata:
+      labels:
+        app: cart
+    spec:
+      serviceAccountName: cart-service-account
+      containers:
+        - name: cart-container
+          image: arsenet10/revive-cart:01 # Replace with your actual container image
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: cart-config      # Refer to ConfigMap
+            - secretRef:
+                name: cart-secret
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+            requests:
+              cpu: "200m"
+              memory: "128Mi"
+
+---
+# Service (ClusterIP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: carts
+spec:
+  type: ClusterIP
+  selector:
+    app: cart
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+---
+# Horizontal Pod Autoscaler (HPA)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cart-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cart-deployment
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

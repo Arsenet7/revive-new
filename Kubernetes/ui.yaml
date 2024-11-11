@@ -1,0 +1,124 @@
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ui-service-account
+
+---
+# ConfigMap for Secrets
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ui-config
+data:
+  JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/urandom"
+  SERVER_TOMCAT_ACCESSLOG_ENABLED: "true"
+  ENDPOINTS_CATALOG: "http://catalog:8080"
+  ENDPOINTS_CARTS: "http://carts:8080"
+  ENDPOINTS_ORDERS: "http://orders:8080"
+  ENDPOINTS_CHECKOUT: "http://checkout:8080"
+  ENDPOINTS_ASSETS: "http://assets:8080"
+  # Add more key-value pairs as needed
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ui
+  template:
+    metadata:
+      labels:
+        app: ui
+    spec:
+      serviceAccountName: ui-service-account
+      containers:
+        - name: ui-container
+          image: arsenet10/revive-ui:01 # Replace with your image
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SERVER_TOMCAT_ACCESSLOG_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: ui-config
+                  key: SERVER_TOMCAT_ACCESSLOG_ENABLED
+            - name: JAVA_OPTS
+              valueFrom:
+                configMapKeyRef:
+                  name: ui-config
+                  key: JAVA_OPTS
+            - name: ENDPOINTS_CATALOG
+              valueFrom:
+                configMapKeyRef:
+                  name: ui-config
+                  key: ENDPOINTS_CATALOG
+            - name: ENDPOINTS_CARTS
+              valueFrom:
+                configMapKeyRef:
+                  name: ui-config
+                  key: ENDPOINTS_CARTS
+            - name: ENDPOINTS_ORDERS
+              valueFrom:
+                configMapKeyRef:
+                  name: ui-config
+                  key: ENDPOINTS_ORDERS
+            - name: ENDPOINTS_CHECKOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: ui-config
+                  key: ENDPOINTS_CHECKOUT
+            - name: ENDPOINTS_ASSETS
+              valueFrom:
+                configMapKeyRef:
+                  name: ui-config
+                  key: ENDPOINTS_ASSETS
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+            requests:
+              cpu: "200m"
+              memory: "128Mi"
+
+---
+# Service (NodePort or LoadBalancer)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui-service
+spec:
+  type: NodePort # Change to LoadBalancer if desired
+  selector:
+    app: ui
+  ports:
+    - protocol: TCP
+      port: 8888
+      targetPort: 8080
+      nodePort: 30007 # Only for NodePort, remove if using LoadBalancer
+
+---
+# Horizontal Pod Autoscaler (HPA)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ui-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ui-deployment
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

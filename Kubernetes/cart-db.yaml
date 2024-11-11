@@ -1,0 +1,91 @@
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cart-db-service-account
+
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cart-db-config
+data:
+  JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/urandom"
+  SERVER_TOMCAT_ACCESSLOG_ENABLED: "true"
+  SPRING_PROFILES_ACTIVE: "dynamodb,mysql,rabbitmq"
+  SPRING_DATASOURCE_WRITER_URL: jdbc:postgresql://orders-db:3306/orders
+  SPRING_DATASOURCE_READER_URL: jdbc:postgresql://orders-db:5432/orders
+  SPRING_RABBITMQ_HOST: "rabbitmq"
+  region: "us-east-1"
+  dynamo_create_table: "true"
+
+---
+# Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cart-db-secret
+type: Opaque
+data:
+  AWS_SECRET_ACCESS_KEY:
+  AWS_ACCESS_KEY_ID:
+  SPRING_DATASOURCE_WRITER_USERNAME: "b3JkZXJzX3VzZXI="
+  SPRING_DATASOURCE_WRITER_PASSWORD: "b3JkZXJzX3Bhc3M="
+  SPRING_DATASOURCE_READER_USERNAME: "b3JkZXJzX3VzZXI="
+  SPRING_DATASOURCE_READER_PASSWORD: "b3JkZXJzX3Bhc3M="
+
+---
+# StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cart-db
+spec:
+  serviceName: "cart-db-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart-db
+  template:
+    metadata:
+      labels:
+        app: cart-db
+    spec:
+      serviceAccountName: cart-db-service-account
+      containers:
+        - name: cart-db-container
+          image: arsenet10/revive-cartdynamodb:01     # DynamoDB local image for testing
+          ports:
+            - containerPort: 8000                # Example port, adjust as needed
+          envFrom:
+            - configMapRef:
+                name: cart-db-config
+            - secretRef:
+                name: cart-db-secret
+          volumeMounts:
+            - name: cart-db-storage
+              mountPath: /home/dynamodb      # Mount path for DynamoDB storage
+  volumeClaimTemplates:
+    - metadata:
+        name: cart-db-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi                          # Adjust the size based on your storage requirements
+
+---
+# Service (ClusterIP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart-db
+spec:
+  type: ClusterIP
+  selector:
+    app: cart-db
+  ports:
+    - protocol: TCP
+      port: 8000                              # Database port
+      targetPort: 8000
