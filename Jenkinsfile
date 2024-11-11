@@ -96,6 +96,7 @@ pipeline {
                     echo 'Pushing Docker image to Docker Hub...'
                     sh '''
                         docker push arsenet10/revive-checkout:01
+                        docker push arsenet10/revive-checkout:db-01
                     '''
                 }
             }
