@@ -1,0 +1,91 @@
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: checkout-db-service-account
+
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: checkout-db-config
+data:
+  REDIS_HOST: "checkout-db"  # Redis hostname (matches StatefulSet service name)
+  REDIS_PORT: "6379"                 # Redis port
+
+---
+# Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: checkout-db-secret
+type: Opaque
+data:
+  REDIS_PASSWORD: "cGFzc3dvcmQ="       # Base64-encoded password (e.g., "password")
+
+---
+# StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: checkout-db
+spec:
+  serviceName: "checkout-db-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout-db
+  template:
+    metadata:
+      labels:
+        app: checkout-db
+    spec:
+      serviceAccountName: checkout-db-service-account
+      containers:
+        - name: checkout-db-container
+          image: arsenet10/revive-checkout:db-01        # Using Redis image
+          ports:
+            - containerPort: 6379                # Default Redis port
+          env:
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: checkout-db-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: checkout-db-config
+                  key: REDIS_PORT
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: checkout-db-secret
+                  key: REDIS_PASSWORD
+          volumeMounts:
+            - name: checkout-db-storage
+              mountPath: /data                   # Default Redis data directory
+  volumeClaimTemplates:
+    - metadata:
+        name: checkout-db-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi                         # Adjust size based on Redis data needs
+
+---
+# Service (ClusterIP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout-db
+spec:
+  type: ClusterIP
+  selector:
+    app: checkout-db
+  ports:
+    - protocol: TCP
+      port: 5432                              # Database port
+      targetPort: 5432

@@ -1,0 +1,81 @@
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: orders-db-service-account
+
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orders-db-config
+data:
+  POSTGRES_DB: "orders" # Database name
+
+
+---
+# Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: orders-db-secret
+type: Opaque
+data:
+  POSTGRES_USER: "b3JkZXJzX3VzZXI="
+  POSTGRES_PASSWORD: "b3JkZXJzX3Bhc3M="
+
+---
+# StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: orders-db
+spec:
+  serviceName: "orders-db-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orders-db
+  template:
+    metadata:
+      labels:
+        app: orders-db
+    spec:
+      serviceAccountName: orders-db-service-account
+      containers:
+        - name: orders-db-container
+          image: arsenet10/revive-orders:db-01    # Replace with your actual database image
+          ports:
+            - containerPort: 5432                 # Example port for PostgreSQL
+          envFrom:
+            - configMapRef:
+                name: orders-db-config            # Reference to ConfigMap
+            - secretRef:
+                name: orders-db-secret            # Reference to Secret
+          volumeMounts:
+            - name: orders-db-storage
+              mountPath: /var/lib/postgresql/data01  # Mount path in the container for persistence
+  volumeClaimTemplates:
+    - metadata:
+        name: orders-db-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi                          # Adjust the storage size as needed
+
+---
+# Service (ClusterIP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders-db
+spec:
+  type: ClusterIP
+  selector:
+    app: orders-db
+  ports:
+    - protocol: TCP
+      port: 5432 # Database port (e.g., 5432 for PostgreSQL)
+      targetPort: 5432

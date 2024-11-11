@@ -1,0 +1,98 @@
+version: '3'
+services:
+  ui:
+    image: arsenet10/revive-ui:01
+    container_name: ui
+    ports:
+      - 8080:8080
+    restart: always
+    depends_on:
+      - cart
+      - assets
+      - catalog
+      - checkout
+      - orders
+  cart:
+    image: arsenet10/revive-cart:01
+    container_name: cart
+    restart: always
+    depends_on:
+      - cart-db
+  cart-db:
+    image: arsenet10/revive-cartdynamodb:01
+    container_name: cart-db
+    restart: always
+    volumes:
+      - cart-db:/home/dynamodblocal
+  assets:
+    image: arsenet10/revive-assets:01
+    container_name: assets
+    restart: always
+  catalog:
+    image: arsenet10/revive-catalog:01
+    container_name: catalog
+    restart: always
+    depends_on:
+      - catalog-db
+    environment:
+      - DB_USER=catalog_user
+      - DB_PASSWORD=catalog
+      - DB_HOST=catalog-db
+      - DB_NAME=sampledb
+
+  catalog-db:
+    image: arsenet10/revive-catalog:db-01
+    container_name: catalog-db
+    restart: always
+    volumes:
+      - catalog-db:/var/lib/mysql
+    environment:
+      - MYSQL_USER=catalog_user
+      - MYSQL_PASSWORD=catalog
+      - MYSQL_DATABASE=sampledb
+      - MYSQL_ROOT_PASSWORD=root
+  checkout:
+    image: arsenet10/revive-checkout:01
+    container_name: checkout
+    restart: always
+    depends_on:
+      - checkout-db
+  checkout-db:
+    image: arsenet10/revive-checkout:db-01
+    container_name: checkout-db
+    restart: always
+    volumes:
+      - checkout-db:/data
+  oders:
+    image: arsenet10/revive-orders:01
+    container_name: orders
+    restart: always
+    depends_on:
+      - orders-db
+    environment:
+      - DB_USER=orders_user
+      - DB_PASSWORD=orders
+      - DB_HOST=orders-db
+      - DB_NAME=orders
+  oders-db:
+    image: arsenet10/revive-orders:db-01
+    container_name: orders-db
+    restart: always
+    volumes:
+      - orders-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=orders_user
+      - POSTGRES_PASSWORD=orders
+      - POSTGRES_DB=orders
+  rabbit-mq:
+    image: arsenet10/revive-orders:rabbit-mq-01
+    container_name: rabbit-mq
+    restart: always
+    ports:
+      - "15671:15671"
+      - "15672:15672"
+volumes:
+  cart-db:
+  catalog-db:
+  checkout-db:
+  orders-db:
