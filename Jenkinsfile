@@ -38,12 +38,15 @@ pipeline {
             steps {
                 script {
                     echo "Deploying with Docker Compose on remote server..."
-                    sh """
-                        sshpass -p '${params.REMOTE_PASS}' ssh $REMOTE_USER@$REMOTE_HOST "
-                        cd $REPO_NAME &&
-                        echo '${params.REMOTE_PASS}' | sudo -S docker-compose up -d
-                        "
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-ars-id', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh """
+                            sshpass -p '${params.REMOTE_PASS}' ssh $REMOTE_USER@$REMOTE_HOST "
+                            cd $REPO_NAME &&
+                            echo '${params.REMOTE_PASS}' | sudo -S docker login -u \$DOCKER_USERNAME -p \$DOCKER_PASSWORD &&
+                            sudo docker-compose up -d
+                            "
+                        """
+                    }
                 }
             }
         }
