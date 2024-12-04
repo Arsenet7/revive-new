@@ -41,7 +41,7 @@ pipeline {
                     sh """
                         sshpass -p '${params.REMOTE_PASS}' ssh $REMOTE_USER@$REMOTE_HOST "
                         cd $REPO_NAME &&
-                        sudo docker-compose up -d
+                        echo '${params.REMOTE_PASS}' | sudo -S docker-compose up -d
                         "
                     """
                 }
