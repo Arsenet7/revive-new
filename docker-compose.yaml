@@ -63,7 +63,7 @@ services:
     restart: always
     volumes:
       - checkout-db:/data
-  oders:
+  orders:
     image: arsenet10/revive-orders:01
     container_name: orders
     restart: always
@@ -74,7 +74,7 @@ services:
       - DB_PASSWORD=orders
       - DB_HOST=orders-db
       - DB_NAME=orders
-  oders-db:
+  orders-db:
     image: arsenet10/revive-orders:db-01
     container_name: orders-db
     restart: always
