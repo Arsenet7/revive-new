@@ -19,7 +19,7 @@ services:
     depends_on:
       - cart-db
   cart-db:
-    image: arsenet10/revive-cartdynamodb:01
+    image: arsenet10/revive-cart:db-01
     container_name: cart-db
     restart: always
     volumes:
