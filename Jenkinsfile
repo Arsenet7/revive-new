@@ -4,10 +4,11 @@ pipeline {
         string(name: 'REMOTE_PASS', defaultValue: '', description: 'Password for remote server')
     }
     environment {
-        REMOTE_HOST = "3.145.98.231" // Replace with your server address
-        REMOTE_USER = "jenkins"      // Replace with your server username
-        GIT_BRANCH = "main"          // Replace with your desired Git branch
+        REMOTE_HOST = "3.145.98.231"  // Replace with your server address
+        REMOTE_USER = "jenkins"       // Replace with your server username
+        GIT_BRANCH = "main"           // Replace with your desired Git branch
         GIT_REPO = "https://github.com/Arsenet7/revive-new.git" // Replace with your Git repo URL
+        REPO_NAME = "revive-new"      // The directory name of the repository
     }
     stages {
         stage('Connect to Remote Server') {
@@ -15,7 +16,7 @@ pipeline {
                 script {
                     echo "Connecting to remote server..."
                     sh """
-                        sshpass -p ${params.REMOTE_PASS} ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST echo "Connected Successfully"
+                        sshpass -p '${params.REMOTE_PASS}' ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST echo "Connected Successfully"
                     """
                 }
             }
@@ -25,8 +26,10 @@ pipeline {
                 script {
                     echo "Cloning repository on remote server..."
                     sh """
-                        sshpass -p ${params.REMOTE_PASS} ssh $REMOTE_USER@$REMOTE_HOST "
-                        git clone -b $GIT_BRANCH $GIT_REPO || (cd $(basename $GIT_REPO .git) && git pull)"
+                        sshpass -p '${params.REMOTE_PASS}' ssh $REMOTE_USER@$REMOTE_HOST "
+                        rm -rf $REPO_NAME &&
+                        git clone -b $GIT_BRANCH $GIT_REPO
+                        "
                     """
                 }
             }
@@ -34,10 +37,10 @@ pipeline {
         stage('Deploy with Docker Compose') {
             steps {
                 script {
-                    echo "Deploying Docker Compose on remote server..."
+                    echo "Deploying with Docker Compose on remote server..."
                     sh """
-                        sshpass -p ${params.REMOTE_PASS} ssh $REMOTE_USER@$REMOTE_HOST "
-                        cd $(basename $GIT_REPO .git) &&
+                        sshpass -p '${params.REMOTE_PASS}' ssh $REMOTE_USER@$REMOTE_HOST "
+                        cd $REPO_NAME &&
                         sudo docker-compose up -d
                         "
                     """
